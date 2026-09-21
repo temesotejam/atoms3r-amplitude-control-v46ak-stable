@@ -1,9 +1,6 @@
 name: Import verified V46ak stable snapshot
 
 on:
-  push:
-    branches:
-      - main
   issues:
     types:
       - opened
@@ -16,7 +13,7 @@ jobs:
     if: github.repository == 'temesotejam/atoms3r-amplitude-control-v46ak-stable'
     runs-on: ubuntu-latest
     steps:
-      - name: Force-push verified source commit
+      - name: Seed all verified source blobs into target
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SOURCE_SHA: 269281ab6b090778a7c82f6abfadb208ce27757b
@@ -26,6 +23,14 @@ jobs:
           git clone --no-tags https://github.com/temesotejam/atoms3r-amplitude-control-development.git source
           cd source
           git checkout "$SOURCE_SHA"
-          git remote remove origin
+          if [ -d .github/workflows ]; then
+            mv .github/workflows .github/workflows-snapshot
+          fi
+          rm -rf .git
+          git init -b stable-import
+          git config user.name "stable-snapshot-import"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Seed verified V46ak snapshot blobs"
           git remote add target "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
-          git push --force target "${SOURCE_SHA}:refs/heads/main"
+          git push --force target HEAD:refs/heads/snapshot-import
