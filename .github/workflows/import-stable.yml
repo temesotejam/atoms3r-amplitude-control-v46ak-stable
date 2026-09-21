@@ -1,0 +1,28 @@
+name: Import verified V46ak stable snapshot
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  import-stable:
+    if: github.repository == 'temesotejam/atoms3r-amplitude-control-v46ak-stable'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Force-push verified source commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: 269281ab6b090778a7c82f6abfadb208ce27757b
+          TARGET_REPO: ${{ github.repository }}
+        run: |
+          set -euxo pipefail
+          git clone --no-tags https://github.com/temesotejam/atoms3r-amplitude-control-development.git source
+          cd source
+          git checkout "$SOURCE_SHA"
+          git remote remove origin
+          git remote add target "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
+          git push --force target "${SOURCE_SHA}:refs/heads/main"
